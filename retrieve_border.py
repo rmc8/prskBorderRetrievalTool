@@ -29,7 +29,7 @@ def init_dir(dir_path: str) -> None:
         os.mkdir(dir_path)
 
 
-def fmt_the_date(dt_str: str) -> str:
+def fmt_the_date(dt_str: str) -> datetime:
     dt_str = dt_str.replace("T", " ")
     return datetime.fromisoformat(dt_str[:-5])
 
