@@ -1,5 +1,7 @@
 import os
+import sys
 import time
+from typing import Optional
 from datetime import datetime
 
 import requests as r
@@ -18,8 +20,10 @@ BASE_URL: str = "https://api.sekai.best/event/{event_id}/rankings/graph?rank={ra
 
 def get_event_id() -> int:
     while True:
-        event_id: str = sg.popup_get_text("Enter the event ID.")
-        if event_id.isnumeric():
+        event_id: Optional[str] = sg.popup_get_text("Enter the event ID.")
+        if event_id is None:
+            exit()
+        elif event_id.isnumeric():
             return int(event_id)
         sg.popup("Enter the event_id numerically, please.")
 
@@ -37,7 +41,8 @@ def fmt_the_date(dt_str: str) -> datetime:
 def main():
     output_dir: str = "./output"
     init_dir(output_dir)
-    event_id: int = get_event_id()
+    args: list = sys.argv
+    event_id: int = args[1] if len(args) > 1 else get_event_id()
     df: DataFrame = DataFrame()
     for rank in TAR_RANK:
         print(f"Get the TOP{rank} border.")
