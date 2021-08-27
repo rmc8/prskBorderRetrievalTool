@@ -2,7 +2,7 @@ import os
 import sys
 import time
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import requests as r
 import PySimpleGUI as sg
@@ -35,7 +35,7 @@ def init_dir(dir_path: str) -> None:
 
 def fmt_the_date(dt_str: str) -> datetime:
     dt_str = dt_str.replace("T", " ")
-    return datetime.fromisoformat(dt_str[:-5])
+    return datetime.fromisoformat(dt_str[:-5]) + timedelta(hours=9)
 
 
 def main():
