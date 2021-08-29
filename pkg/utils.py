@@ -29,7 +29,8 @@ def popup(msg: str):
 
 class BorderAPI:
     def __init__(self, event_id: int, rank: int):
-        BASE_URL: str = "https://api.sekai.best/event/{event_id}/rankings/graph?rank={rank}"
+        BASE_URL: str = "https://api.sekai.best/event/{event_id}/" \
+            "rankings/graph?rank={rank}"
         self.rank: int = rank
         self.url: str = BASE_URL.format(event_id=event_id, rank=rank)
 
