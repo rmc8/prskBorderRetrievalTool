@@ -1,12 +1,8 @@
-import os
 import sys
-import time
-from typing import Optional
-from datetime import datetime, timedelta
 
-import requests as r
-import PySimpleGUI as sg
 from pandas import DataFrame, merge
+
+from pkg.utils import BorderAPI, get_event_id, init_dir, popup
 
 TAR_RANK: list = [
     1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
@@ -15,54 +11,43 @@ TAR_RANK: list = [
     2000, 3000, 4000, 5000, 10000,
     20000, 30000, 40000, 50000, 100000
 ]
-BASE_URL: str = "https://api.sekai.best/event/{event_id}/rankings/graph?rank={rank}"
 
 
-def get_event_id() -> int:
-    while True:
-        event_id: Optional[str] = sg.popup_get_text("Enter the event ID.")
-        if event_id is None:
-            exit()
-        elif event_id.isnumeric():
-            return int(event_id)
-        sg.popup("Enter the event_id numerically, please.")
-
-
-def init_dir(dir_path: str) -> None:
-    if not os.path.exists(dir_path):
-        os.mkdir(dir_path)
-
-
-def fmt_the_date(dt_str: str) -> datetime:
-    dt_str = dt_str.replace("T", " ")
-    return datetime.fromisoformat(dt_str[:-5]) + timedelta(hours=9)
+def rm_user_data(df: DataFrame) -> DataFrame:
+    rm_cols: list = [
+        rm_col for rm_col in df.columns.tolist()
+        if "UID" in rm_col or "userName" in rm_col
+    ]
+    for rm_col in rm_cols:
+        del df[rm_col]
+    return df
 
 
 def main():
     output_dir: str = "./output"
     init_dir(output_dir)
     args: list = sys.argv
-    event_id: int = args[1] if len(args) > 1 else get_event_id()
+    is_exist_args: bool = len(args) > 1
+    event_id: int = int(args[1]) if is_exist_args else get_event_id()
     df: DataFrame = DataFrame()
     for rank in TAR_RANK:
-        print(f"Get the TOP{rank} border.")
-        url: str = BASE_URL.format(event_id=event_id, rank=rank)
-        res = r.get(url).json()
-        time.sleep(1)
-        border_raw_list: list = res["data"]["eventRankings"]
-        border_list: list = [
-            {"datetime": fmt_the_date(rec["timestamp"]), f"TOP{rank}": rec["score"]}
-            for rec in border_raw_list
-        ]
-        cdf: DataFrame = DataFrame(border_list)
+        print(f"Get the TOP{rank} border")
+        ba = BorderAPI(event_id=event_id, rank=rank)
+        cdf: DataFrame = ba.get_border_df()
         if df.empty:
             cdf = cdf.sort_values("datetime")
             df = cdf
             continue
         df = merge(df, cdf, on="datetime")
+    # Output
     output_path: str = f"{output_dir}/{event_id:05}_border.csv"
+    df = rm_user_data(df)
     df.to_csv(output_path, index=False)
-    sg.popup(f"The border was output to the following file path.\nPath: {output_path}")
+    if not is_exist_args:
+        popup(
+            "The border was output to the following file path.\n"
+            f"Path: {output_path}"
+        )
 
 
 if __name__ == "__main__":
